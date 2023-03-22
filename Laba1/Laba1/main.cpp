@@ -1,76 +1,81 @@
+#include "quadraticEquation.hpp"
 #include <cmath>
-#include <fstream>
-#include <iostream>
-#include <stdio.h>
 
 using namespace std;
 
-
-double Discriminant(double a, double b, double c)
+valueRoots oneRoot(double a, double b, double c)
 {
-    return b*b - 4 * a * c;
+    valueRoots result;
+    result.x = -b/(2*a);
+    result.type = oneSolution;
+    return result;
 }
 
-double firstDoubleRoots(double a, double b, double c)
+valueRoots DoubleRoots(double a, double b, double c)
 {
-    double x1;
-    double disk = Discriminant(a, b, c);
-    x1 = (-b - sqrt(disk)/(2*a));
-    return x1;
+    valueRoots result;
+    double disk = b*b - 4 * a * c;
+    result.x1 = (-b - sqrt(disk)/(2*a));
+    result.x2 = (-b + sqrt(disk)/(2*a));
+    result.type = twoSolution;
+    return result;
 }
 
-double secondDoubleRoots(double a, double b, double c)
+valueRoots findQuadratic(double a, double b, double c)
 {
-    double x2;
-    double disk = Discriminant(a, b, c);
-    x2 = (-b + sqrt(disk)/(2*a));
-    return x2;
-}
-
-double oneRoot(double a, double b, double c)
-{
-    double x;
-    x = -b/(2*a);
-    return x;
-}
-
-void findQuadratic(double a, double b, double c,ofstream& output)
-{
-    double searchDisc = Discriminant(a, b, c);
-    if(searchDisc > 0)
+    valueRoots result;
+    double searchDisc = b*b - 4 * a * c;
+    if((a == 0) || ((a == 0) && (b = 0)))
     {
-        output << "два корня : " << firstDoubleRoots(a, b, c) << " "<< secondDoubleRoots(a, b, c);
-    }else if (searchDisc == 0)
+        result.type  = someCoef;
+    }else if((a == 0) && (b == 0) && (c == 0))
     {
-        output << "единственный корень : " << oneRoot(a, b, c);
-    }else if (searchDisc < 0)
+        result.type = allCoef;
+    }else if(searchDisc > 0)
     {
-        output << "Корни комплексные";
+        result = DoubleRoots(a, b, c);
+    }else if(searchDisc == 0)
+    {
+        result = oneRoot(a, b, c);
+    }else
+    {
+        result.type = complexSolution;
     }
     
+    return result;
 }
 
-
-
-
-int main()
+void printResult(ofstream& output, valueRoots result)
 {
-    ifstream file("input.txt");
-    ofstream file2("output.txt");
-    if(!file.is_open() || !file2.is_open())
-    {
-        cout << "error" << endl;
-        return 1;
+    switch (result.type) {
+        case allCoef:
+            output << "Все коэфициенты равны нулю -> корни равны 0" << endl;
+            break;
+        case someCoef:
+            output << "Некоторые коэфициенты равны 0 -> корни равны 0" << endl;
+            break;
+        case twoSolution:
+            output << "Первый корень: " << result.x1 << " Второй корень: "<< result.x2 << endl;
+            break;
+        case oneSolution:
+            output << "Корень уравнения: " << result.x << endl;
+            break;
+        case complexSolution:
+            output << "Значение корней комплексные" << endl;
+            break;
+        default:
+            output << "ERROR" << endl;
+            break;
     }
-    double a,b,c;
-    while (file >> a >> b >> c)
-    {
-        findQuadratic(a, b, c, file2);
-    }
-
-    file.close();
-    file2.close();
-    
-    return 0;
 }
 
+valueRoots readRoots(ifstream& input, ofstream& output)
+{
+    double a, b , c;
+    input >> a >> b >> c;
+    
+    valueRoots result = findQuadratic(a, b, c);
+    printResult(output, result);
+
+    return result;
+}
